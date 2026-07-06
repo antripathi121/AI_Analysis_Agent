@@ -1080,9 +1080,38 @@ def save_batch_result_to_master(campaign, sales_cpg, unit_results, shopper_resul
     offer_start_value = pd.to_datetime(campaign["Start Date"])
     offer_end_value = pd.to_datetime(campaign["End Date"])
 
+    def normalize_key_value(value):
+        if value is None:
+            return ""
+        try:
+            return pd.to_datetime(value).strftime("%Y-%m-%d")
+        except Exception:
+            return str(value).strip().lower()
+
+    target_row = None
     row = 2
+
     while ws.cell(row, 1).value not in [None, ""]:
+        existing_cpg = str(ws.cell(row, 1).value).strip().lower()
+        existing_offer = str(ws.cell(row, 2).value).strip().lower()
+        existing_start = normalize_key_value(ws.cell(row, 5).value)
+        existing_end = normalize_key_value(ws.cell(row, 6).value)
+
+        if (
+            existing_cpg == cpg_name_value.lower()
+            and existing_offer == offer_name_value.lower()
+            and existing_start == offer_start_value.strftime("%Y-%m-%d")
+            and existing_end == offer_end_value.strftime("%Y-%m-%d")
+        ):
+            target_row = row
+            break
+
         row += 1
+
+    if target_row is None:
+        target_row = row
+
+    row = target_row
 
     redemption_ratio = 0
     try:
